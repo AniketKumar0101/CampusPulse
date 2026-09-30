@@ -13,7 +13,7 @@ const pptx = new pptxgen();
 // PRESENTATION CONFIGURATION (16:9 Widescreen: 13.333 x 7.5 inches)
 // ==========================================
 pptx.layout = "LAYOUT_WIDE";
-pptx.author = "Team CampusPulse (Lead: Dharambir)";
+pptx.author = "Team CampusPulse (Lead: Aniket Kumar)";
 pptx.company = "Sri Sairam Engineering College";
 pptx.title = "CampusPulse - Tech Pulse 2026 Pitch Deck";
 
@@ -88,7 +88,7 @@ function setupSlideChrome(slide, categoryText, titleText, accentColor = ACCENT_C
     fontSize: 9, color: TEXT_DIM, fontFace: FONT_BODY, valign: "middle"
   });
 
-  slide.addText(`Team CampusPulse | Lead: Dharambir   [ ${slideNumber} / ${TOTAL_SLIDES} ]`, {
+  slide.addText(`Team CampusPulse | Lead: Aniket Kumar   [ ${slideNumber} / ${TOTAL_SLIDES} ]`, {
     x: 8.0, y: 6.72, w: 4.53, h: 0.3,
     fontSize: 9, color: TEXT_DIM, fontFace: FONT_BODY, align: "right", valign: "middle"
   });
@@ -171,7 +171,7 @@ function setupSlideChrome(slide, categoryText, titleText, accentColor = ACCENT_C
     fill: { color: "0D1526" }, line: { color: CARD_BORDER, width: 1 }
   });
 
-  slide.addText("Team Name: CampusPulse   |   Team Leader: Dharambir   |   Institution: Sri Sairam Engineering College (SSEC), Chennai\nLive Prototype Tested: http://localhost:3000   |   Interactive Slides: http://localhost:3000/slides.html", {
+  slide.addText("Team Name: CampusPulse   |   Team Leader: Aniket Kumar   |   Institution: Sri Sairam Engineering College (SSEC), Chennai\nLive Prototype Tested: http://localhost:3000   |   Interactive Slides: http://localhost:3000/slides.html", {
     x: 1.0, y: 5.0, w: 11.33, h: 0.75,
     fontSize: 11, color: TEXT_LIGHT, fontFace: FONT_HEADING, lineSpacingMultiple: 1.2, valign: "middle"
   });
@@ -937,7 +937,7 @@ function setupSlideChrome(slide, categoryText, titleText, accentColor = ACCENT_C
     "Track: Smart Campus & Intelligent Systems (PS-04)",
     "Event: Tech Pulse 2026 (Sri Sairam Engineering College)",
     "Team Name: CampusPulse",
-    "Team Leader: Dharambir",
+    "Team Leader: Aniket Kumar",
     "Live Prototype: http://localhost:3000",
     "Interactive Slides: http://localhost:3000/slides.html"
   ];
