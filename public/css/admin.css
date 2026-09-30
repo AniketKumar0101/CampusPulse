@@ -1,0 +1,183 @@
+/* Campus Incident Command System (ICS) & Security Operations Center (SOC) View */
+
+.soc-view-overlay {
+  position: absolute;
+  inset: 0;
+  background: var(--bg-canvas);
+  z-index: 850;
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  gap: 16px;
+  overflow-y: auto;
+}
+
+.soc-view-overlay.hidden {
+  display: none !important;
+}
+
+.soc-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-dim);
+}
+
+.soc-heading-group h2 {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.soc-heading-group p {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+/* Metric KPI Strip */
+.soc-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+
+.soc-kpi-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-dim);
+  border-radius: var(--radius-md);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.soc-kpi-label {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.soc-kpi-value {
+  font-family: var(--font-mono);
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.soc-kpi-card.critical .soc-kpi-value { color: var(--status-critical); }
+.soc-kpi-card.active .soc-kpi-value { color: var(--accent-primary); }
+.soc-kpi-card.resolved .soc-kpi-value { color: var(--status-resolved); }
+
+/* Main Split Grid */
+.soc-split-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 16px;
+  flex: 1;
+}
+
+.soc-panel-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-dim);
+  border-radius: var(--radius-md);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow: hidden;
+}
+
+.soc-panel-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Incident Queue Table */
+.soc-table-wrapper {
+  overflow-x: auto;
+  flex: 1;
+}
+
+.soc-data-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 12px;
+}
+
+.soc-data-table th {
+  padding: 8px 10px;
+  background: var(--bg-surface-elevated);
+  color: var(--text-muted);
+  font-weight: 600;
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid var(--border-dim);
+}
+
+.soc-data-table td {
+  padding: 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+  color: var(--text-primary);
+  vertical-align: middle;
+}
+
+.soc-data-table tr:hover td {
+  background: var(--bg-surface-elevated);
+}
+
+.crew-assignment-tag {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: #93c5fd;
+}
+
+/* Broadcast Advisory Form */
+.advisory-level-selector {
+  display: flex;
+  gap: 6px;
+}
+
+.adv-level-btn {
+  flex: 1;
+  padding: 6px;
+  border-radius: var(--radius-xs);
+  font-size: 11.5px;
+  font-weight: 500;
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border-dim);
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.adv-level-btn.selected[data-level="info"] {
+  background: rgba(59, 130, 246, 0.15);
+  border-color: var(--accent-primary);
+  color: #93c5fd;
+}
+
+.adv-level-btn.selected[data-level="warning"] {
+  background: rgba(249, 115, 22, 0.15);
+  border-color: var(--status-high);
+  color: #fdba74;
+}
+
+.adv-level-btn.selected[data-level="emergency"] {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: var(--status-critical);
+  color: #fca5a5;
+}

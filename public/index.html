@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CampusPulse - Campus Spatial Navigation &amp; Incident Dispatch System | Sri Sairam Engineering College</title>
+  <meta name="description" content="Enterprise campus GIS navigation, multi-floor indoor routing, obstacle-aware pathfinding, and safety dispatch command center.">
+  <meta name="theme-color" content="#090b10">
+
+  <link rel="icon" type="image/svg+xml" href="/assets/logo.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="/css/variables.css">
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="/css/map.css">
+  <link rel="stylesheet" href="/css/incidents.css">
+  <link rel="stylesheet" href="/css/admin.css">
+</head>
+<body>
+  <div id="app">
+    <!-- Campus Advisory Alert Banner -->
+    <div id="emergency-banner" class="hidden">
+      <div class="banner-content">
+        <span class="banner-tag">Advisory</span>
+        <span id="banner-message-text">All campus operations normal.</span>
+      </div>
+      <button id="btn-close-banner" class="banner-close" aria-label="Dismiss banner">
+        <svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+
+    <!-- Application Top Navbar -->
+    <header class="app-header">
+      <div class="brand-section" id="brand-home-btn" role="button" tabindex="0" title="Campus Overview (Click to Reset)" aria-label="CampusPulse Home - Return to Overview">
+        <img src="/assets/logo.svg" alt="CampusPulse" class="brand-logo-img">
+        <div class="brand-divider"></div>
+        <div class="brand-meta">
+          <span class="brand-title">CampusPulse GIS</span>
+          <span class="brand-subtitle">Sri Sairam Engineering College</span>
+        </div>
+      </div>
+
+      <!-- Quick Search -->
+      <div class="search-container">
+        <div class="search-input-wrapper">
+          <svg class="icon icon-sm" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" id="global-search-input" class="search-input" placeholder="Search facilities, research labs, lecture halls..." autocomplete="off">
+          <span class="search-shortcut-badge">⌘K</span>
+        </div>
+        <div id="search-results-dropdown" class="search-dropdown"></div>
+      </div>
+
+      <!-- Header Controls -->
+      <div class="header-actions">
+        <!-- Telemetry Status Indicator -->
+        <div class="telemetry-status" id="ws-status-pill">
+          <span class="telemetry-dot"></span>
+          <span id="ws-status-text">Connected</span>
+        </div>
+
+        <!-- Mode Switcher -->
+        <div class="segmented-control">
+          <button id="role-btn-student" class="segmented-btn active">
+            <svg class="icon icon-sm" viewBox="0 0 24 24"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+            Navigation
+          </button>
+          <button id="role-btn-admin" class="segmented-btn">
+            <svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            Command SOC
+          </button>
+        </div>
+
+        <!-- High-Priority Distress Trigger -->
+        <button id="btn-sos-panic" class="btn-emergency-sos" aria-label="Trigger Emergency Distress Beacon">
+          <svg class="icon icon-sm" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          Emergency SOS
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Map Workspace -->
+    <main class="workspace-body">
+      <button id="panel-toggle-btn" class="sidebar-toggle-btn" title="Toggle control panel">
+        <svg class="icon icon-sm" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+
+      <!-- Sidebar Dock -->
+      <aside id="floating-panel" class="sidebar-panel">
+        <!-- Sidebar Navigation Tabs -->
+        <nav class="sidebar-tabs">
+          <button class="nav-tab-btn active" data-tab="tab-nav">
+            <svg class="icon icon-sm" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>
+            Directions
+          </button>
+          <button class="nav-tab-btn" data-tab="tab-incidents">
+            <svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            Incidents
+            <span class="count-pill" id="incidents-tab-badge">0</span>
+          </button>
+          <button class="nav-tab-btn" data-tab="tab-events">
+            <svg class="icon icon-sm" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            Directory
+          </button>
+        </nav>
+
+        <div class="sidebar-body">
+          <!-- TAB 1: DIRECTIONS & PATHFINDING -->
+          <div id="tab-nav" class="tab-pane active">
+            <div class="ui-card">
+              <div class="ui-card-header">
+                <span class="ui-card-title">Routing Engine</span>
+                <span style="font-family: var(--font-mono); font-size: 10px; color: var(--text-muted);">DIJKSTRA-A*</span>
+              </div>
+
+              <div class="field-group">
+                <label class="field-label" for="nav-start-select">Origin Location</label>
+                <select id="nav-start-select" class="field-select">
+                  <option value="node_gate" selected>Campus Main Gate A</option>
+                  <option value="node_alpha_ent_s">Alpha Block South Entrance</option>
+                  <option value="node_beta_ent_s">Beta Block Plaza</option>
+                  <option value="node_delta_ent_w">Delta Complex Entrance</option>
+                  <option value="node_food_ent_e">Campus Food Court</option>
+                </select>
+              </div>
+
+              <div class="field-group">
+                <label class="field-label" for="nav-dest-select">Target Destination</label>
+                <select id="nav-dest-select" class="field-select">
+                  <option value="node_delta_hack_arena" selected>Tech Pulse 2026 Hackathon Arena (Delta Complex)</option>
+                  <option value="node_alpha_f1_ai_lab">AI &amp; Neural Networks Lab (Alpha Block Floor 1)</option>
+                  <option value="node_alpha_f2_cyber_lab">Cybersecurity &amp; Forensic Lab (Alpha Block Floor 2)</option>
+                  <option value="node_gamma_f0_corridor">Central Digital Library (Gamma Block)</option>
+                  <option value="node_food_ent_e">Campus Food Court &amp; Cafeteria</option>
+                  <option value="node_health_ent_w">Campus Health Center (Clinic &amp; First Aid)</option>
+                  <option value="node_sports_ent_s">Sports Arena &amp; Gymnasium</option>
+                </select>
+              </div>
+
+              <!-- Route Criteria Switches -->
+              <div class="setting-row">
+                <span>ADA Accessible (Ramp / Elevator)</span>
+                <label class="ui-switch">
+                  <input type="checkbox" id="toggle-accessible">
+                  <span class="ui-slider"></span>
+                </label>
+              </div>
+
+              <div class="setting-row">
+                <span>Dynamic Hazard Avoidance</span>
+                <label class="ui-switch">
+                  <input type="checkbox" id="toggle-hazard-avoidance" checked>
+                  <span class="ui-slider"></span>
+                </label>
+              </div>
+
+              <div style="display: flex; gap: 8px; margin-top: 4px;">
+                <button id="btn-calculate-route" class="btn btn-primary" style="flex: 1;">
+                  <svg class="icon icon-sm" viewBox="0 0 24 24"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
+                  Calculate Route
+                </button>
+                <button id="btn-clear-route" class="btn btn-secondary" title="Reset path">
+                  <svg class="icon icon-sm" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+              </div>
+
+              <button id="btn-emergency-evacuate" class="btn btn-outline-danger">
+                <svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                Shortest Route to Emergency Exit
+              </button>
+            </div>
+
+            <!-- Route Summary & Step Guidance HUD -->
+            <div id="route-summary-card" class="ui-card" style="display: none;">
+              <div class="ui-card-header">
+                <span class="ui-card-title">Route Guidance</span>
+                <span id="route-time-val" style="font-family: var(--font-mono); font-size: 12px; color: var(--accent-primary);">~3 min</span>
+              </div>
+
+              <div class="route-hud-box">
+                <div>
+                  <div class="hud-stat-num" id="route-dist-val">0 m</div>
+                  <div class="hud-stat-lbl">Distance</div>
+                </div>
+                <div style="text-align: right;">
+                  <div class="hud-stat-num" style="color: var(--status-resolved);">Normal</div>
+                  <div class="hud-stat-lbl">Pedestrian Traffic</div>
+                </div>
+              </div>
+
+              <div id="hazard-warning-badge" style="display: none; background: rgba(249, 115, 22, 0.1); border: 1px solid rgba(249, 115, 22, 0.3); color: #fdba74; padding: 8px 10px; border-radius: var(--radius-sm); font-size: 11.5px;">
+                Hazard alert: Pedestrian path redirected around active inspection zone.
+              </div>
+
+              <div class="field-label" style="margin-top: 4px;">Waypoints &amp; Maneuvers</div>
+              <div id="turn-steps-list" style="display: flex; flex-direction: column; gap: 4px; max-height: 240px; overflow-y: auto;"></div>
+            </div>
+          </div>
+
+          <!-- TAB 2: INCIDENTS FEED -->
+          <div id="tab-incidents" class="tab-pane">
+            <button id="btn-open-report-modal" class="btn btn-primary" style="width: 100%;">
+              <svg class="icon icon-sm" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              File Incident Report
+            </button>
+
+            <div class="ui-card-header" style="margin-top: 4px;">
+              <span class="ui-card-title">Active Field Reports</span>
+              <span style="font-size: 11px; color: var(--text-muted); font-family: var(--font-mono);">LIVE FEED</span>
+            </div>
+
+            <div id="incidents-feed-list" style="display: flex; flex-direction: column; gap: 8px;"></div>
+          </div>
+
+          <!-- TAB 3: CAMPUS DIRECTORY & EVENTS -->
+          <div id="tab-events" class="tab-pane">
+            <div class="ui-card-header">
+              <span class="ui-card-title">Campus Directory &amp; Events</span>
+              <span style="font-size: 11px; color: var(--text-muted); font-family: var(--font-mono);">SCHEDULE</span>
+            </div>
+            <div id="events-list-container" style="display: flex; flex-direction: column; gap: 10px;"></div>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Center GIS Viewport -->
+      <section id="map-viewport-container" class="map-viewport">
+        <!-- SVG GIS Canvas -->
+        <svg id="campus-svg-canvas" viewBox="0 0 1000 700"></svg>
+
+        <!-- Indoor CAD Floor Level Switcher -->
+        <div id="floor-switcher-bar" class="floor-switcher-bar hidden">
+          <div class="floor-badge-label">
+            <svg class="icon icon-sm" viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"/><line x1="9" y1="22" x2="9" y2="2"/><line x1="15" y1="22" x2="15" y2="2"/><line x1="4" y1="12" x2="20" y2="12"/></svg>
+            <span id="indoor-building-title">Building</span>
+          </div>
+          <div id="floor-buttons-container" style="display: flex; gap: 4px;"></div>
+          <button id="btn-exit-indoor" class="btn-exit-indoor">
+            <svg class="icon icon-sm" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+            Overview
+          </button>
+        </div>
+
+        <!-- Layer Filters -->
+        <div class="map-layers-toggle">
+          <label class="layer-chip">
+            <input type="checkbox" id="layer-incidents" checked>
+            <span>Hazards</span>
+          </label>
+          <label class="layer-chip">
+            <input type="checkbox" id="layer-events" checked>
+            <span>Key Venues</span>
+          </label>
+        </div>
+
+        <!-- Map Navigation Controls -->
+        <div class="map-controls-group">
+          <button id="btn-zoom-in" class="map-control-btn" title="Zoom in">
+            <svg class="icon icon-sm" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </button>
+          <button id="btn-zoom-out" class="map-control-btn" title="Zoom out">
+            <svg class="icon icon-sm" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </button>
+          <button id="btn-reset-view" class="map-control-btn" title="Center campus">
+            <svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><polyline points="3 3 3 8 8 8"/></svg>
+          </button>
+        </div>
+
+        <!-- Precision GIS Telemetry Bar -->
+        <div class="gis-hud-bar">
+          <div class="scale-bar-ruler">
+            <span>50m</span>
+            <div class="scale-line"></div>
+          </div>
+          <span class="gis-coords">12.9602° N, 80.0573° E</span>
+        </div>
+
+        <!-- Map Popover Card -->
+        <div id="map-tooltip" class="map-popover-card"></div>
+      </section>
+
+      <!-- Security Operations Center (SOC) Overlay View -->
+      <section id="admin-command-view" class="soc-view-overlay hidden">
+        <div class="soc-header-row">
+          <div class="soc-heading-group">
+            <h2>
+              <svg class="icon" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+              Campus Incident Command System (ICS)
+            </h2>
+            <p>Operations dispatch, infrastructure maintenance tracking, and public safety advisory telemetry.</p>
+          </div>
+          <div>
+            <button class="btn btn-secondary" onclick="window.location.reload()">
+              <svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+              Sync Records
+            </button>
+          </div>
+        </div>
+
+        <!-- Telemetry KPI Cards -->
+        <div class="soc-kpi-grid">
+          <div class="soc-kpi-card">
+            <span class="soc-kpi-label">Logged Tickets</span>
+            <span class="soc-kpi-value" id="kpi-total">0</span>
+          </div>
+          <div class="soc-kpi-card critical">
+            <span class="soc-kpi-label">Critical Alerts</span>
+            <span class="soc-kpi-value" id="kpi-critical">0</span>
+          </div>
+          <div class="soc-kpi-card active">
+            <span class="soc-kpi-label">Active Dispatches</span>
+            <span class="soc-kpi-value" id="kpi-inprogress">0</span>
+          </div>
+          <div class="soc-kpi-card resolved">
+            <span class="soc-kpi-label">Resolution Rate</span>
+            <span class="soc-kpi-value" id="kpi-rate">0%</span>
+          </div>
+        </div>
+
+        <div class="soc-split-grid">
+          <!-- Live Incident Queue -->
+          <div class="soc-panel-card">
+            <div class="soc-panel-title">
+              <span>Field Incident Triage Queue</span>
+              <span style="font-family: var(--font-mono); font-size: 11px; color: var(--accent-primary);">REALTIME SYNC</span>
+            </div>
+            <div class="soc-table-wrapper">
+              <table class="soc-data-table">
+                <thead>
+                  <tr>
+                    <th>Ref ID</th>
+                    <th>Priority &amp; Urgency</th>
+                    <th>Classification</th>
+                    <th>Location</th>
+                    <th>Reporter</th>
+                    <th>Assigned Crew</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody id="admin-incidents-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Public Advisory Transmitter -->
+          <div class="soc-panel-card">
+            <div class="soc-panel-title">
+              <span>Public Safety Advisory Broadcast</span>
+              <span style="font-family: var(--font-mono); font-size: 10px; color: var(--text-muted);">ALL TERMINALS</span>
+            </div>
+
+            <div class="field-group">
+              <label class="field-label" for="broadcast-title-input">Advisory Subject</label>
+              <input type="text" id="broadcast-title-input" class="field-input" value="FACILITY OPERATIONS ADVISORY">
+            </div>
+
+            <div class="field-group">
+              <label class="field-label">Threat / Alert Level</label>
+              <div class="advisory-level-selector">
+                <button type="button" class="adv-level-btn" data-level="info">Informational</button>
+                <button type="button" class="adv-level-btn selected" data-level="warning">Warning</button>
+                <button type="button" class="adv-level-btn" data-level="emergency">Critical</button>
+              </div>
+            </div>
+
+            <div class="field-group">
+              <label class="field-label" for="broadcast-message-input">Advisory Directive</label>
+              <textarea id="broadcast-message-input" class="field-textarea" rows="4" placeholder="Enter instructional public advisory..."></textarea>
+            </div>
+
+            <div style="display: flex; gap: 8px;">
+              <button id="btn-send-broadcast" class="btn btn-primary" style="flex: 1;">
+                <svg class="icon icon-sm" viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+                Transmit Broadcast
+              </button>
+              <button id="btn-clear-broadcast" class="btn btn-secondary">
+                Clear
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- MODAL: FIELD INCIDENT REPORTING -->
+  <div id="report-incident-modal" class="modal-backdrop">
+    <div class="modal-container">
+      <div class="modal-header-bar">
+        <div class="modal-heading">
+          <svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          File Field Incident Report
+        </div>
+        <button id="btn-close-report-modal" class="modal-close-trigger">
+          <svg class="icon icon-sm" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+
+      <div class="modal-content-area">
+        <!-- Classification -->
+        <div class="field-group">
+          <label class="field-label">Category</label>
+          <div class="category-pill-grid">
+            <div class="category-pill-btn selected" data-category="hazard">Safety Hazard</div>
+            <div class="category-pill-btn" data-category="maintenance">Maintenance</div>
+            <div class="category-pill-btn" data-category="security">Security</div>
+            <div class="category-pill-btn" data-category="medical">Medical</div>
+            <div class="category-pill-btn" data-category="utility">Power / Water</div>
+            <div class="category-pill-btn" data-category="infrastructure">Civil Works</div>
+          </div>
+        </div>
+
+        <!-- Priority Level -->
+        <div class="field-group">
+          <label class="field-label">Priority</label>
+          <div class="severity-pill-group">
+            <button type="button" class="sev-btn" data-severity="low">Low</button>
+            <button type="button" class="sev-btn selected" data-severity="medium">Medium</button>
+            <button type="button" class="sev-btn" data-severity="high">High</button>
+            <button type="button" class="sev-btn" data-severity="critical">Critical</button>
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label" for="report-title">Brief Description / Subject</label>
+          <input type="text" id="report-title" class="field-input" placeholder="e.g. Broken water conduit leaking in central corridor">
+        </div>
+
+        <div class="field-group">
+          <label class="field-label" for="report-desc">Detailed Observations</label>
+          <textarea id="report-desc" class="field-textarea" rows="3" placeholder="Specify room, physical damages, and immediate containment needed..."></textarea>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+          <div class="field-group">
+            <label class="field-label" for="report-bldg-select">Campus Facility</label>
+            <select id="report-bldg-select" class="field-select">
+              <option value="bldg_alpha">Alpha Block (CSE/AI)</option>
+              <option value="bldg_beta">Beta Block (ECE/Mech)</option>
+              <option value="bldg_gamma">Gamma Block (Admin/Library)</option>
+              <option value="bldg_delta">Delta Complex (Auditorium)</option>
+              <option value="bldg_food">Campus Food Court</option>
+              <option value="bldg_sports">Sports Arena</option>
+              <option value="bldg_health">Health Center</option>
+              <option value="campus_outdoor">Outdoor Walkways</option>
+            </select>
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="report-floor-select">Level / Floor</label>
+            <select id="report-floor-select" class="field-select">
+              <option value="0">Ground Floor (L0)</option>
+              <option value="1">First Floor (L1)</option>
+              <option value="2">Second Floor (L2)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label" for="report-location-name">Room / Landmark Marker</label>
+          <input type="text" id="report-location-name" class="field-input" placeholder="e.g. Near AI Lab 101 or South Stairwell">
+        </div>
+
+        <div class="field-group">
+          <label class="field-label">Photo Evidence (Optional)</label>
+          <label class="file-dropzone" for="incident-photo-input">
+            <svg class="icon icon-lg" style="margin: 0 auto; display: block; color: var(--text-muted);" viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 6px;">Select JPEG / PNG evidence file</div>
+            <input type="file" id="incident-photo-input" accept="image/*" style="display: none;">
+            <img id="incident-photo-preview" class="file-preview-thumbnail" alt="Incident evidence preview">
+          </label>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+          <div class="field-group">
+            <label class="field-label" for="report-reporter-name">Reporter Identification</label>
+            <input type="text" id="report-reporter-name" class="field-input" placeholder="Student / Staff ID">
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="report-reporter-contact">Contact Extension / Mobile</label>
+            <input type="text" id="report-reporter-contact" class="field-input" placeholder="For incident confirmation">
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer-bar">
+        <button id="btn-cancel-report" class="btn btn-secondary">Cancel</button>
+        <button id="btn-submit-report" class="btn btn-primary">
+          Submit Report
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: EMERGENCY SOS PANIC CONFIRMATION -->
+  <div id="sos-modal" class="modal-backdrop">
+    <div class="modal-container" style="max-width: 420px; border-color: #991b1b;">
+      <div class="modal-header-bar" style="background: rgba(185, 28, 28, 0.1);">
+        <div class="modal-heading" style="color: #fca5a5;">
+          <svg class="icon" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          Emergency Distress Beacon
+        </div>
+        <button id="btn-close-sos-modal" class="modal-close-trigger">
+          <svg class="icon icon-sm" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+
+      <div class="modal-content-area" style="text-align: center; gap: 12px;">
+        <p style="font-size: 13px; color: var(--text-secondary); line-height: 1.5;">
+          Confirming activates an urgent distress telemetry beacon transmitted immediately to Campus Security Quick Reaction Force and Medical First Aid Units.
+        </p>
+        <div style="background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.25); color: #fca5a5; padding: 8px; border-radius: var(--radius-sm); font-size: 11.5px; font-family: var(--font-mono);">
+          Location: Sri Sairam Campus Central Zone (Lat 12.9602, Long 80.0573)
+        </div>
+      </div>
+
+      <div class="modal-footer-bar" style="justify-content: center;">
+        <button id="btn-confirm-sos-panic" class="btn btn-danger-solid" style="width: 100%; padding: 10px;">
+          Confirm Emergency Beacon
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: ADMIN TRIAGE & DISPATCH -->
+  <div id="triage-modal" class="modal-backdrop">
+    <div class="modal-container" style="max-width: 440px;">
+      <div class="modal-header-bar">
+        <div class="modal-heading">
+          Triage Incident Record (<span id="triage-incident-id" style="color: var(--accent-primary); font-family: var(--font-mono);"></span>)
+        </div>
+        <button id="btn-close-triage-modal" class="modal-close-trigger">
+          <svg class="icon icon-sm" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+
+      <div class="modal-content-area">
+        <div id="triage-title" style="font-size: 13px; font-weight: 600; color: var(--text-primary);"></div>
+
+        <div class="field-group">
+          <label class="field-label" for="triage-status-select">Operational Status</label>
+          <select id="triage-status-select" class="field-select">
+            <option value="Reported">Reported</option>
+            <option value="Investigating">Investigating</option>
+            <option value="In Progress">In Progress</option>
+            <option value="Resolved">Resolved</option>
+          </select>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label" for="triage-assignee-select">Assign Response Crew</label>
+          <select id="triage-assignee-select" class="field-select">
+            <option value="Electrical Maintenance Unit">Electrical Maintenance Unit</option>
+            <option value="Campus Security Quick Reaction Force">Campus Security Quick Reaction Force</option>
+            <option value="Plumbing &amp; Sanitation Unit">Plumbing &amp; Sanitation Unit</option>
+            <option value="HVAC Contractor">HVAC Contractor</option>
+            <option value="Health Center Paramedic">Health Center Paramedic</option>
+            <option value="Campus Safety Officer">Campus Safety Officer</option>
+          </select>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label" for="triage-notes">Resolution Remarks &amp; Sign-off</label>
+          <textarea id="triage-notes" class="field-textarea" rows="3" placeholder="Log repair actions or investigation findings..."></textarea>
+        </div>
+      </div>
+
+      <div class="modal-footer-bar">
+        <button id="btn-save-triage" class="btn btn-primary" style="width: 100%;">
+          Commit Triage Update
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="/js/app.js"></script>
+</body>
+</html>

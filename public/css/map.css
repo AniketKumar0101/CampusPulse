@@ -1,0 +1,441 @@
+/* Professional Campus GIS Vector Map Styling */
+
+.map-viewport {
+  flex: 1;
+  position: relative;
+  background: #090c15;
+  overflow: hidden;
+  cursor: grab;
+}
+
+.map-viewport.grabbing {
+  cursor: grabbing;
+}
+
+#campus-svg-canvas {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: 0 0;
+}
+
+/* GIS Telemetry HUD Overlay (Scale Bar, Coordinates, Compass) */
+.gis-hud-bar {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(14, 19, 34, 0.88);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--border-dim);
+  border-radius: var(--radius-sm);
+  padding: 4px 10px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+  z-index: 750;
+  pointer-events: none;
+}
+
+.scale-bar-ruler {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.scale-line {
+  width: 60px;
+  height: 3px;
+  border-left: 2px solid var(--text-muted);
+  border-right: 2px solid var(--text-muted);
+  border-bottom: 2px solid var(--text-muted);
+  transition: width 0.12s ease-out;
+}
+
+.gis-coords {
+  padding-left: 8px;
+  border-left: 1px solid var(--border-subtle);
+}
+
+/* Floor Level Switcher (Indoor CAD View) */
+.floor-switcher-bar {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  background: rgba(13, 20, 36, 0.94);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 5px 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(10px);
+  z-index: 850;
+}
+
+.floor-switcher-bar.hidden {
+  display: none !important;
+}
+
+.floor-badge-label {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--text-primary);
+  padding: 3px 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border-right: 1px solid var(--border-subtle);
+  margin-right: 2px;
+}
+
+.floor-btn {
+  background: #090e1a;
+  border: 1px solid var(--border-dim);
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 5px 11px;
+  border-radius: var(--radius-xs);
+  cursor: pointer;
+  transition: all var(--duration-fast);
+}
+
+.floor-btn:hover {
+  background: var(--bg-surface-elevated);
+  color: #fff;
+  border-color: var(--accent-primary);
+}
+
+.floor-btn.active {
+  background: var(--accent-primary-gradient);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.25);
+  box-shadow: 0 2px 12px var(--accent-primary-glow);
+}
+
+.btn-exit-indoor {
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  color: #fca5a5;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 5px 10px;
+  border-radius: var(--radius-xs);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  transition: all var(--duration-fast);
+  margin-left: 6px;
+}
+
+.btn-exit-indoor:hover {
+  background: rgba(239, 68, 68, 0.25);
+  color: #ffffff;
+  border-color: #ef4444;
+}
+
+/* Map Action Controls (Zoom in, Zoom out, Reset) */
+.map-controls-group {
+  position: absolute;
+  right: 14px;
+  bottom: 50px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  z-index: 800;
+}
+
+.map-control-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-dim);
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+  transition: all var(--duration-fast);
+}
+
+.map-control-btn:hover {
+  background: var(--bg-surface-elevated);
+  color: var(--text-primary);
+  border-color: var(--border-subtle);
+}
+
+/* Layer Checklist Tool */
+.map-layers-toggle {
+  position: absolute;
+  bottom: 12px;
+  left: calc(var(--sidebar-width) + 24px);
+  background: rgba(14, 19, 34, 0.92);
+  border: 1px solid var(--border-dim);
+  border-radius: var(--radius-sm);
+  padding: 4px 10px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  z-index: 750;
+  transition: left var(--duration-base) var(--ease-out);
+}
+
+.sidebar-panel.collapsed ~ .workspace-body .map-layers-toggle {
+  left: 60px;
+}
+
+.layer-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.layer-chip input[type="checkbox"] {
+  accent-color: var(--accent-primary);
+  cursor: pointer;
+}
+
+/* Architectural SVG Map Elements */
+.svg-cad-grid {
+  stroke: rgba(255, 255, 255, 0.025);
+  stroke-width: 1;
+}
+
+.svg-lawn {
+  fill: #064e3b;
+  fill-opacity: 0.12;
+  stroke: rgba(16, 185, 129, 0.15);
+  stroke-width: 1;
+}
+
+.svg-curb {
+  fill: none;
+  stroke: #1e293b;
+  stroke-width: 24;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.svg-road-asphalt {
+  fill: none;
+  stroke: #0f172a;
+  stroke-width: 20;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.svg-road-stripes {
+  fill: none;
+  stroke: #334155;
+  stroke-width: 1.5;
+  stroke-dasharray: 6, 8;
+}
+
+.svg-walkway {
+  fill: none;
+  stroke: rgba(59, 130, 246, 0.08);
+  stroke-width: 10;
+  stroke-linecap: round;
+}
+
+/* Architectural Building Footprints */
+.svg-building-shell {
+  fill: #131c2e;
+  stroke: #2e3e5b;
+  stroke-width: 1.5;
+  rx: 6px;
+  transition: all var(--duration-fast);
+  cursor: pointer;
+}
+
+.svg-building-shell:hover {
+  fill: #19253d;
+  stroke: var(--accent-primary);
+  stroke-width: 2;
+}
+
+.svg-roof-cutout {
+  fill: #0e1626;
+  stroke: #1e293b;
+  stroke-width: 1;
+  rx: 4px;
+}
+
+.svg-building-label {
+  fill: #f8fafc;
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 600;
+  pointer-events: none;
+  text-anchor: middle;
+}
+
+.svg-building-sublabel {
+  fill: #94a3b8;
+  font-family: var(--font-sans);
+  font-size: 8.5px;
+  font-weight: 500;
+  pointer-events: none;
+  text-anchor: middle;
+}
+
+.svg-building-code-watermark {
+  fill: rgba(255, 255, 255, 0.035);
+  font-family: var(--font-mono);
+  font-size: 32px;
+  font-weight: 700;
+  pointer-events: none;
+  text-anchor: middle;
+}
+
+/* Indoor CAD Room Graphics */
+.svg-cad-room {
+  fill: #111827;
+  stroke: #2d3748;
+  stroke-width: 1;
+  cursor: pointer;
+  transition: all var(--duration-fast);
+  rx: 3px;
+}
+
+.svg-cad-room:hover {
+  fill: #1a2234;
+  stroke: var(--accent-primary);
+}
+
+.svg-cad-room.active {
+  fill: #1e293b !important;
+  stroke: var(--accent-primary) !important;
+  stroke-width: 2 !important;
+  filter: drop-shadow(0 0 10px rgba(255, 107, 53, 0.5));
+}
+
+.svg-room-title {
+  font-family: var(--font-sans);
+  font-weight: 600;
+  fill: #f8fafc;
+  text-anchor: middle;
+  pointer-events: none;
+}
+
+.svg-room-sub {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  fill: #94a3b8;
+  text-anchor: middle;
+  pointer-events: none;
+}
+
+.svg-room-pill-bg {
+  fill: rgba(13, 17, 26, 0.88);
+  stroke: var(--border-subtle);
+  stroke-width: 0.8;
+  rx: 3px;
+}
+
+.svg-room-label {
+  font-family: var(--font-sans);
+  font-size: 8px;
+  font-weight: 500;
+  fill: #e2e8f0;
+  text-anchor: middle;
+  pointer-events: none;
+}
+
+.svg-room-code-tag {
+  font-family: var(--font-mono);
+  font-size: 6.5px;
+  font-weight: 600;
+  fill: #64748b;
+  text-anchor: middle;
+  pointer-events: none;
+}
+
+/* Precision Vector Route Line - Luminous Emerald / Aurora Mint */
+.svg-route-line {
+  fill: none;
+  stroke: #10b981;
+  stroke-width: 4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 6, 6;
+  animation: routeDash 1.2s linear infinite;
+  filter: drop-shadow(0 0 8px rgba(16, 185, 129, 0.75));
+}
+
+.svg-route-line.evacuation {
+  stroke: #f43f5e !important;
+  stroke-dasharray: 4, 4 !important;
+  animation-duration: 0.8s !important;
+  filter: drop-shadow(0 0 10px rgba(244, 63, 94, 0.85)) !important;
+}
+
+.svg-route-line.accessible {
+  stroke: #06b6d4 !important;
+  filter: drop-shadow(0 0 8px rgba(6, 182, 212, 0.75)) !important;
+}
+
+@keyframes routeDash {
+  from { stroke-dashoffset: 24; }
+  to { stroke-dashoffset: 0; }
+}
+
+/* Map Popover Card */
+.map-popover-card {
+  position: absolute;
+  background: rgba(15, 23, 42, 0.95);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+  box-shadow: var(--shadow-dropdown), 0 0 20px rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  display: none;
+  min-width: 230px;
+  max-width: 320px;
+  pointer-events: auto;
+}
+
+.map-popover-card.active {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  animation: popoverFadeIn 0.16s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes popoverFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Incident Pins on Map */
+.svg-pin-incident {
+  cursor: pointer;
+  transition: transform 0.2s ease, filter 0.2s ease;
+}
+
+.svg-pin-incident:hover {
+  filter: drop-shadow(0 0 10px rgba(255, 107, 53, 0.85));
+}
