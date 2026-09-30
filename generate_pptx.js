@@ -951,25 +951,15 @@ function setupSlideChrome(slide, categoryText, titleText, accentColor = ACCENT_C
 // ==========================================
 // WRITE OUTPUT FILE
 // ==========================================
-const outputPathOriginal = path.join(__dirname, "CampusPulse_TechPulse2026_Submission.pptx");
-const outputPathNew = path.join(__dirname, "CampusPulse_Presentation_TechPulse2026.pptx");
+const outputPath = path.join(__dirname, "CampusPulse_TechPulse2026_Submission.pptx");
 
-async function savePresentations() {
-  try {
-    await pptx.writeFile({ fileName: outputPathOriginal });
-    console.log("🎉 SUCCESS: Saved at: " + outputPathOriginal);
-  } catch (err) {
-    console.warn("⚠️ Could not overwrite original (file locked):", err.message);
-  }
-
-  try {
-    await pptx.writeFile({ fileName: outputPathNew });
-    console.log("🎉 SUCCESS: Saved at: " + outputPathNew);
-  } catch (err) {
-    console.error("❌ Error saving new version:", err.message);
-  }
-}
-
-savePresentations();
+pptx.writeFile({ fileName: outputPath }).then(() => {
+  console.log("=============================================================");
+  console.log("🎉 SUCCESS: Presentation generated successfully!");
+  console.log("📁 Saved at: " + outputPath);
+  console.log("=============================================================");
+}).catch(err => {
+  console.error("❌ Error generating presentation:", err);
+});
 
 
